@@ -196,6 +196,10 @@ module Licensee
       key == 'lgpl-2.1' || key == 'lgpl-3.0'
     end
 
+    def vim?
+      key == 'vim'
+    end
+
     # Is this license a Creative Commons license?
     def creative_commons?
       key.start_with?('cc-')

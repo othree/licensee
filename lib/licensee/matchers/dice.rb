@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+VIM_CONFIDENCE_TOLERANCE = 0.03
+
 module Licensee
   module Matchers
     class Dice < Licensee::Matchers::Matcher
@@ -26,7 +28,15 @@ module Licensee
             if license.creative_commons? && file.potential_false_positive?
               false
             else
-              license.wordset && license.length_delta(file) <= license.max_delta
+              max_delta = license.max_delta
+              tolerance = if license.vim? then VIM_CONFIDENCE_TOLERANCE else 0 end
+
+              if tolerance > 0
+                inverse_confidence_threshold = Licensee.inverse_confidence_threshold
+                max_delta = (max_delta * [1, tolerance + inverse_confidence_threshold].min / inverse_confidence_threshold).to_i
+              end
+
+              license.wordset && license.length_delta(file) <= max_delta
             end
           end
         end
@@ -44,8 +54,9 @@ module Licensee
       alias licenses_by_similarity matches_by_similarity
 
       def matches
-        @matches ||= matches_by_similarity.select do |_, similarity|
-          similarity >= minimum_confidence
+        @matches ||= matches_by_similarity.select do |license, similarity|
+          tolerance = if license.vim? then VIM_CONFIDENCE_TOLERANCE * 100 else 0 end
+          similarity >= [0, minimum_confidence - tolerance].max
         end
       end
 
