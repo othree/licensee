@@ -124,6 +124,11 @@ module Licensee
       100.0 * (overlap * 2.0 / total)
     end
 
+    def fields_delta(other)
+      return 0 if LicenseField.keys.size == 0
+      LicenseField.keys.size * other.wordset.max_by(&:length).length
+    end
+
     # SHA1 of the normalized content
     def content_hash
       @content_hash ||= DIGEST.hexdigest content_normalized
